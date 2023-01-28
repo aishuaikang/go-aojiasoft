@@ -1,2 +1,2 @@
 # go-aojiasoft
-go 调用奥迦插件
+golang 对接aojia奥伽插件
