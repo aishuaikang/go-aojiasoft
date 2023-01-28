@@ -1,6 +1,10 @@
+//go:generate go-bindata -fs -o=EDCCom.go -prefix=./ -nocompress -nomemcopy ./AoJia64.dll ./ARegJ.dll
 package aojia
 
 import (
+	"errors"
+	"io/ioutil"
+	"os"
 	"syscall"
 	"unsafe"
 
@@ -9,14 +13,41 @@ import (
 )
 
 var (
-	aRegJDll     = syscall.NewLazyDLL("ARegJ.dll")
+	aRegJDll                                                   *syscall.LazyDLL
+	_SetDllPathA, _SetDllPathW, _RegA, _RegW, _UnRegA, _UnRegW *syscall.LazyProc
+
+	ARegJDllPath string
+	AoJiaDllPath string
+)
+
+func init() {
+	runtimeDir, _ := os.Getwd()
+	ARegJDll := "ARegJ.dll"
+	AoJiaDll := "AoJia64.dll"
+
+	ARegJDllPath = runtimeDir + "\\" + ARegJDll
+	AoJiaDllPath = runtimeDir + "\\" + AoJiaDll
+
+	ARegJdllBytes, err := Asset(ARegJDll)
+	AoJia64DllBytes, err2 := Asset(AoJiaDll)
+
+	if err != nil || err2 != nil {
+		panic("ARegJ.dll 或 AoJia64.dll 读取失败")
+	}
+
+	if ioutil.WriteFile(ARegJDllPath, ARegJdllBytes, 0777) != nil || ioutil.WriteFile(AoJiaDllPath, AoJia64DllBytes, 0777) != nil {
+		panic("ARegJ.dll 或 AoJia64.dll 写入失败")
+	}
+
+	aRegJDll = syscall.NewLazyDLL("ARegJ.dll")
 	_SetDllPathA = aRegJDll.NewProc("SetDllPathA")
 	_SetDllPathW = aRegJDll.NewProc("SetDllPathW")
-	_RegA        = aRegJDll.NewProc("RegA")
-	_RegW        = aRegJDll.NewProc("RegW")
-	_UnRegA      = aRegJDll.NewProc("UnRegA")
-	_UnRegW      = aRegJDll.NewProc("UnRegW")
-)
+	_RegA = aRegJDll.NewProc("RegA")
+	_RegW = aRegJDll.NewProc("RegW")
+	_UnRegA = aRegJDll.NewProc("UnRegA")
+	_UnRegW = aRegJDll.NewProc("UnRegW")
+
+}
 
 type AJsoft struct {
 	aj       *ole.IDispatch
@@ -43,6 +74,16 @@ func (com *AJsoft) Release() {
 	com.IUnknown.Release()
 	com.aj.Release()
 	ole.CoUninitialize()
+}
+
+func CreateAJObj() (*AJsoft, error) {
+	// 设置dm.dll路径,并进行注册
+
+	if ret := SetDllPathW(AoJiaDllPath, 0); !ret {
+		return nil, errors.New("AoJia64.dll 注册失败")
+	}
+
+	return NewAJsoft(), nil
 }
 
 /*

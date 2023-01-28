@@ -1,16 +1,13 @@
 package main
 
 import (
-	"errors"
 	"log"
 
 	aojia "github.com/aishuaikang/go-aojiasoft"
-
-	"os"
 )
 
 func main() {
-	aj, err := CreateAJObj()
+	aj, err := aojia.CreateAJObj()
 	if err != nil {
 		log.Println(err)
 		return
@@ -43,19 +40,6 @@ func main() {
 	default:
 		log.Println("失败 (未知错误)")
 	}
-	data := aj.GetScreenDataBmpBytes(10, 10, 100, 100, "")
-	os.WriteFile("test.bmp", data, os.ModePerm)
-}
-
-func CreateAJObj() (*aojia.AJsoft, error) {
-	// 获取当前工作目录
-	dir, _ := os.Getwd()
-
-	// 设置dm.dll路径,并进行注册
-
-	if ret := aojia.SetDllPathW(dir+"\\AoJia64.dll", 0); !ret {
-		return nil, errors.New("AoJia64.dll 注册失败")
-	}
-
-	return aojia.NewAJsoft(), nil
+	// data := aj.GetScreenDataBmpBytes(10, 10, 100, 100, "")
+	// os.WriteFile("test.bmp", data, os.ModePerm)
 }
