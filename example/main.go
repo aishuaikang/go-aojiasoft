@@ -4,7 +4,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/qianniancn/go-dmsoft/aojia"
+	aojia "github.com/aishuaikang/go-aojiasoft"
 
 	"os"
 )
